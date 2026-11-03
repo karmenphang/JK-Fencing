@@ -15,7 +15,8 @@ export function startOrder(productName: string) {
 
 const NOTICE = 'Order enquiry only — no payment required yet.'
 const STEPS = ['Product', 'Details', 'Review'] as const
-type Step = 0 | 1 | 2 | 'done'
+/** 'handoff' = WhatsApp has been opened, but we cannot know if the customer pressed Send */
+type Step = 0 | 1 | 2 | 'handoff'
 const DRAFT_KEY = 'km-enquiry-draft'
 
 const ease = [0.22, 1, 0.36, 1] as const
@@ -23,17 +24,22 @@ const field =
   'mt-2 w-full rounded-2xl border border-charcoal/15 bg-cream px-4 py-3.5 text-[1rem] text-charcoal outline-none transition-[border-color,box-shadow] duration-300 placeholder:text-stone/60 focus:border-gold focus:shadow-[0_0_0_4px_rgba(184,151,90,0.15)] user-invalid:border-[#a5523f]'
 const labelCls = 'block text-[0.85rem] text-ink'
 
-function readDraft(): Enquiry | null {
+interface Draft { data: Enquiry; ref: string; handoff: boolean }
+
+/** Tab only draft, so a phone that reloads the page after switching to WhatsApp keeps the enquiry and its reference. */
+function readDraft(): Draft | null {
   try {
     const raw = sessionStorage.getItem(DRAFT_KEY)
-    return raw ? { ...emptyEnquiry(products[0].name), ...JSON.parse(raw) } : null
+    if (!raw) return null
+    const d = JSON.parse(raw) as Partial<Draft>
+    return { data: { ...emptyEnquiry(products[0].name), ...d.data }, ref: d.ref ?? '', handoff: !!(d.handoff && d.ref) }
   } catch {
     return null
   }
 }
-function writeDraft(e: Enquiry | null) {
+function writeDraft(d: Draft | null) {
   try {
-    if (e) sessionStorage.setItem(DRAFT_KEY, JSON.stringify(e))
+    if (d) sessionStorage.setItem(DRAFT_KEY, JSON.stringify(d))
     else sessionStorage.removeItem(DRAFT_KEY)
   } catch {
     /* storage unavailable: the form still works */
@@ -57,7 +63,7 @@ function Notice({ tone = 'light' }: { tone?: 'light' | 'sage' }) {
 }
 
 function Stepper({ step }: { step: Step }) {
-  const idx = step === 'done' ? 3 : step
+  const idx = step === 'handoff' ? 2 : step
   return (
     <ol className="flex items-center gap-2" aria-label="Enquiry progress">
       {STEPS.map((s, i) => {
@@ -126,18 +132,20 @@ function SummaryBlock({ title, onEdit, children }: { title: string; onEdit?: () 
 }
 
 export function OrderEnquiry() {
-  const [step, setStep] = useState<Step>(0)
-  const [data, setData] = useState<Enquiry>(() => readDraft() ?? emptyEnquiry(products[0].name))
-  const [consent, setConsent] = useState(false)
+  const [initial] = useState(readDraft)
+  const [step, setStep] = useState<Step>(initial?.handoff ? 'handoff' : 0)
+  const [data, setData] = useState<Enquiry>(() => initial?.data ?? emptyEnquiry(products[0].name))
+  // Consent was already given if we are restoring the hand off screen
+  const [consent, setConsent] = useState(!!initial?.handoff)
   const [consentError, setConsentError] = useState(false)
-  const [ref, setRef] = useState('')
+  const [ref, setRef] = useState(initial?.ref ?? '')
   const card = useRef<HTMLDivElement>(null)
   const firstRender = useRef(true)
 
   const set = <K extends keyof Enquiry>(k: K, v: Enquiry[K]) => setData((d) => ({ ...d, [k]: v }))
   const product = products.find((p) => p.name === data.product) ?? products[0]
 
-  useEffect(() => { if (step !== 'done') writeDraft(data) }, [data, step])
+  useEffect(() => { writeDraft({ data, ref, handoff: step === 'handoff' }) }, [data, ref, step])
 
   // Preselect a product from any "Order this" button on the page
   useEffect(() => {
@@ -169,14 +177,14 @@ export function OrderEnquiry() {
 
   return (
     <div ref={card} className="scroll-mt-24 rounded-[32px] bg-ivory p-5 shadow-[0_40px_90px_-60px_rgba(30,29,27,0.65)] ring-1 ring-charcoal/5 sm:p-9">
-      {step !== 'done' && (
+      {step !== 'handoff' && (
         <div className="space-y-5">
           <Notice />
           <Stepper step={step} />
         </div>
       )}
 
-      <div className={step === 'done' ? '' : 'mt-8'}>
+      <div className={step === 'handoff' ? '' : 'mt-8'}>
         <AnimatePresence mode="wait" initial={false}>
           {/* STEP 1 · PRODUCT */}
           {step === 0 && (
@@ -367,55 +375,59 @@ export function OrderEnquiry() {
                       document.getElementById('order-consent')?.focus()
                       return
                     }
-                    setStep('done')
-                    writeDraft(null)
+                    setStep('handoff')
                   }}
                   className={`btn btn-sage flex-1 ${consent ? '' : 'opacity-60'}`}
                 >
-                  <WhatsAppIcon /> Send enquiry on WhatsApp
+                  <WhatsAppIcon /> Continue to WhatsApp
                 </a>
               </div>
-              <p className="mt-3 text-center text-[0.75rem] text-stone">WhatsApp opens with your enquiry written out. You just press send.</p>
+              <p className="mt-3 text-center text-[0.75rem] leading-relaxed text-stone">
+                Nothing is sent yet. WhatsApp opens with your enquiry written out,
+                <br className="hidden sm:inline" /> and it only reaches me when you press <b className="font-medium text-ink">Send</b> there.
+              </p>
             </Panel>
           )}
 
-          {/* CONFIRMATION */}
-          {step === 'done' && (
-            <Panel k="done">
+          {/* WHATSAPP HAND OFF · the enquiry is written out but not sent until the customer presses Send */}
+          {step === 'handoff' && (
+            <Panel k="handoff">
               <div className="text-center">
                 <motion.div
-                  initial={{ scale: 0.6, opacity: 0 }}
+                  initial={{ scale: 0.7, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ duration: 0.8, ease }}
-                  className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-sage-deep text-white"
+                  className="relative mx-auto grid h-16 w-16 place-items-center rounded-full bg-sage-deep text-white"
                 >
-                  <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-                    <motion.path d="M5 12.5l4.5 4.5L19 7.5" strokeLinecap="round" strokeLinejoin="round" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.7, delay: 0.35, ease }} />
-                  </svg>
+                  <span className="absolute inset-0 rounded-full bg-sage-deep/40 motion-safe:animate-ping [animation-duration:2.4s]" aria-hidden="true" />
+                  <WhatsAppIcon className="relative h-7 w-7" />
                 </motion.div>
-                <h3 id="enquiry-step-done" tabIndex={-1} className="display mt-6 text-[clamp(2rem,6vw,2.8rem)] leading-tight outline-none">
-                  Thank you, {data.name.trim().split(/\s+/)[0] || 'friend'}.
+                <p className="eyebrow mt-6 text-gold">Almost there</p>
+                <h3 id="enquiry-step-handoff" tabIndex={-1} className="display mt-3 text-[clamp(2rem,6vw,2.8rem)] leading-tight outline-none">
+                  One last step, {data.name.trim().split(/\s+/)[0] || 'friend'}.
                 </h3>
-                <p className="mx-auto mt-3 max-w-[36ch] leading-relaxed text-ink/80">
-                  Your enquiry is ready in WhatsApp. Once you press send, I will personally review it and reply to you myself.
+                <p className="mx-auto mt-3 max-w-[38ch] leading-relaxed text-ink/80">
+                  Your enquiry is written out in WhatsApp, but it <b className="font-medium text-charcoal">has not been sent yet</b>.
+                  Please press <b className="font-medium text-charcoal">Send</b> in WhatsApp. I only receive it once you do.
                 </p>
                 <p className="mt-5 inline-flex flex-col items-center rounded-2xl bg-cream px-5 py-3">
                   <span className="eyebrow !text-[0.58rem] text-stone">Your enquiry reference</span>
                   <span id="enquiry-ref" className="mt-1 select-all font-medium tracking-[0.08em] text-charcoal tabular-nums">{ref}</span>
+                  <span className="mt-1 text-[0.7rem] text-stone">Already included in your message</span>
                 </p>
               </div>
 
-              <ol className="mx-auto mt-8 max-w-md space-y-4">
+              <ol className="mx-auto mt-8 max-w-md space-y-4" aria-label="What happens next">
                 {[
-                  ['Press send in WhatsApp', 'Your message is already written, with your reference included.'],
-                  ['I review it personally', `Every enquiry comes to me, ${site.founder.split(' ')[0]}, not a bot.`],
+                  ['Press Send in WhatsApp', 'Your message is waiting in our chat with your reference included. Until you press Send, nothing reaches me.'],
+                  ['I review it personally', `Once your message arrives, I read it myself, ${site.founder.split(' ')[0]}, not a bot.`],
                   ['I reply to you', 'I will confirm price, availability and delivery with you on WhatsApp.'],
-                ].map(([t, s], i) => (
-                  <li key={t} className="flex gap-4">
-                    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-gold/60 text-[0.75rem] text-gold">{i + 1}</span>
+                ].map(([t, sub], i) => (
+                  <li key={t} className="flex gap-4" aria-current={i === 0 ? 'step' : undefined}>
+                    <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-full text-[0.75rem] ${i === 0 ? 'bg-charcoal text-ivory' : 'border border-gold/60 text-gold'}`}>{i + 1}</span>
                     <span>
-                      <span className="block text-[0.95rem] text-charcoal">{t}</span>
-                      <span className="block text-[0.82rem] leading-relaxed text-stone">{s}</span>
+                      <span className={`block text-[0.95rem] ${i === 0 ? 'font-medium text-charcoal' : 'text-charcoal'}`}>{t}</span>
+                      <span className="block text-[0.82rem] leading-relaxed text-stone">{sub}</span>
                     </span>
                   </li>
                 ))}
@@ -425,19 +437,23 @@ export function OrderEnquiry() {
 
               <div className="mx-auto mt-6 flex max-w-md flex-col gap-3">
                 <a href={link} target="_blank" rel="noopener" className="btn btn-sage w-full">
-                  <WhatsAppIcon /> WhatsApp did not open? Tap here
+                  <WhatsAppIcon /> Open WhatsApp to press Send
                 </a>
-                <button
-                  type="button"
-                  onClick={() => { setData(emptyEnquiry(products[0].name)); setConsent(false); setRef(''); setStep(0) }}
-                  className="btn btn-ghost w-full"
-                >
-                  Start a new enquiry
-                </button>
+                <p className="text-center text-[0.75rem] leading-relaxed text-stone">
+                  Not sure it went? Look in your WhatsApp chat with <span className="select-all text-charcoal">{site.whatsappDisplay}</span>.
+                  If your message is there with a tick beside it, it has been sent.
+                </p>
+                <div className="mt-2 flex flex-col gap-3 sm:flex-row">
+                  <button type="button" onClick={() => go(2)} className="btn btn-ghost flex-1">Edit my enquiry</button>
+                  <button
+                    type="button"
+                    onClick={() => { setData(emptyEnquiry(products[0].name)); setConsent(false); setRef(''); setStep(0) }}
+                    className="btn btn-ghost flex-1"
+                  >
+                    Start a new enquiry
+                  </button>
+                </div>
               </div>
-              <p className="mt-4 text-center text-[0.75rem] text-stone">
-                Prefer to message directly? WhatsApp <span className="select-all text-charcoal">{site.whatsappDisplay}</span>
-              </p>
             </Panel>
           )}
         </AnimatePresence>

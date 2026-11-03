@@ -41,7 +41,7 @@ function QuestionForm() {
         </p>
         <button type="submit" className="btn btn-primary w-full"><WhatsAppIcon /> Send via WhatsApp</button>
         <p aria-live="polite" className="min-h-5 text-center text-sm text-sage-deep">
-          {sent && <>Your message is ready in WhatsApp. <a className="underline" href={sent} target="_blank" rel="noopener">Did not open? Tap here.</a></>}
+          {sent && <>Your message is written out in WhatsApp. It reaches me only when you press Send there. <a className="underline" href={sent} target="_blank" rel="noopener">WhatsApp did not open? Tap here.</a></>}
         </p>
       </form>
     </div>
@@ -75,7 +75,7 @@ export function Contact() {
           </h2>
           <p className="mt-6 max-w-[38ch] leading-relaxed text-ink/80">
             {mode === 'order'
-              ? 'Tell me what you would like and where it should go. Your enquiry comes to me on WhatsApp, and I review every one personally.'
+              ? 'Tell me what you would like and where it should go. Your enquiry is written out for you in WhatsApp, and once you press Send it comes straight to me. I review every one personally.'
               : 'Tell me what you are looking for. Your message opens in WhatsApp so we can talk directly, person to person.'}
           </p>
           <div role="tablist" aria-label="What would you like to do?" className="mt-8 flex max-w-sm gap-1 rounded-full border border-charcoal/10 bg-ivory/70 p-1">

@@ -194,7 +194,7 @@ export const faqs = [
   },
   {
     q: 'How do I order?',
-    a: 'Tap “Order this” on any product, or use the order enquiry form near the bottom of this page. It sends me your enquiry on WhatsApp. It is an enquiry only, so no payment is needed. I will review it personally and reply to confirm the details with you.',
+    a: 'Tap “Order this” on any product, or use the order enquiry form near the bottom of this page. It writes out your enquiry in WhatsApp, and it reaches me when you press Send there. It is an enquiry only, so no payment is needed. Once it arrives, I will review it personally and reply to confirm the details with you.',
   },
   {
     q: 'Do you deliver across Malaysia?',

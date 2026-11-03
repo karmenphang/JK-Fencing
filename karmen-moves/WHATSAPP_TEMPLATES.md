@@ -7,8 +7,10 @@ Number: **+60 11 1635 0635**
 1. A customer taps **Order this** on any product, or opens **Order enquiry** near the bottom of the website.
 2. Three short steps: choose product and quantity, add contact and delivery details, review the summary.
 3. They read the privacy notice and tick the consent box. Only then can WhatsApp open.
-4. WhatsApp opens with the enquiry written out, addressed to you. They press send.
-5. The website shows a thank you screen with their enquiry reference and explains you will review it personally.
+4. WhatsApp opens with the enquiry written out, addressed to you. **Nothing reaches you until they press Send in WhatsApp.**
+5. The website shows a "One last step" screen with their enquiry reference. It tells them clearly that the enquiry has not been sent yet and that they must press Send. It never says the enquiry was received, because the website cannot know that.
+
+So the only proof an enquiry exists is the message in your WhatsApp. If a customer mentions a reference you cannot find, kindly ask them to check whether they pressed Send.
 
 The website never shows prices, stock or payment details. Those are confirmed by you in the chat.
 
