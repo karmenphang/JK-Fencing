@@ -24,8 +24,23 @@ export function Privacy() {
       </p>
       <h2>What this website collects</h2>
       <p>
-        This website does not store the details you type into the contact form. When you press send, your message is passed
-        to WhatsApp on your own device, and you choose whether to send it.
+        This website does not store anything you type into the order enquiry or contact forms. Your details are written into a
+        WhatsApp message on your own device, and nothing is shared until you press send in WhatsApp yourself. While you fill in
+        an order enquiry, your browser may keep a temporary draft in this tab only, so you do not lose your progress. It is
+        cleared when you finish or close the tab.
+      </p>
+      <h2>Order enquiries</h2>
+      <p>
+        An order enquiry includes the product and quantity you choose, your name, phone number, optional email, delivery
+        address and any notes. Before WhatsApp opens, you are asked to confirm that you agree to this notice. An enquiry is not
+        an order and no payment is taken. I use these details only to reply to you, confirm the product, price, availability
+        and delivery, and arrange an order if you decide to go ahead.
+      </p>
+      <h2>How long I keep your details</h2>
+      <p>
+        Enquiry messages stay in my WhatsApp chat history. I keep order related details only as long as needed for the order,
+        delivery, warranty questions and any records I am required to keep, and I delete them when you ask unless the law
+        requires otherwise.
       </p>
       <h2>When you contact me</h2>
       <p>

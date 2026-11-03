@@ -2,40 +2,48 @@
 
 Number: **+60 11 1635 0635**
 
-## How orders reach you
+## How order enquiries reach you
 
-1. A customer taps **Order this** on any product, or fills in **Place an order** near the bottom of the website.
-2. WhatsApp opens on their phone with a ready order message addressed to you. They just press send.
-3. You receive it looking like this:
+1. A customer taps **Order this** on any product, or opens **Order enquiry** near the bottom of the website.
+2. Three short steps: choose product and quantity, add contact and delivery details, review the summary.
+3. They read the privacy notice and tick the consent box. Only then can WhatsApp open.
+4. WhatsApp opens with the enquiry written out, addressed to you. They press send.
+5. The website shows a thank you screen with their enquiry reference and explains you will review it personally.
+
+The website never shows prices, stock or payment details. Those are confirmed by you in the chat.
+
+You receive it looking like this:
 
 ```
-*NEW ORDER REQUEST · KARMEN MOVES*
-Ref: KM-031126-4821
+*NEW ORDER ENQUIRY · KARMEN MOVES*
+Enquiry ref: KM-261103-7QH4X
 
-*Order*
-Product: MOB Neck Healer
+*Product*
+MOB Neck Healer
 Quantity: 1
 
 *Customer*
 Name: Siti Aminah
 Phone: 012 345 6789
+Email: siti@example.com
 
 *Delivery*
-Address: 12 Jalan Bunga Raya, Taman Melati
-Postcode: 53100
-State: Kuala Lumpur
+12 Jalan Bunga Raya, Taman Melati
+53100 Kuala Lumpur
+Kuala Lumpur
 
-Preferred payment: DuitNow QR
-Notes: Please call after 6pm
+*Notes*
+Please call after 6pm
 
-Please confirm the price, stock and delivery. Thank you!
+This is an order enquiry only. I understand no payment is required yet and Karmen will reply personally to confirm the details.
+I agree to the KARMEN MOVES privacy notice.
 ```
 
 (The customer above is an example only.)
 
-The **Ref** code helps you find any order later. Just search it in WhatsApp.
+Every enquiry reference is unique: the date plus five random characters, with no confusing letters like O, 0, I or 1. Search the reference in WhatsApp to find any enquiry later.
 
-Payment options and the maximum quantity can be changed in `src/data/content.ts` under `orderSettings`.
+The maximum quantity per enquiry (5) is set in `src/lib/order.ts` as `MAX_QTY`.
 
 ---
 
@@ -48,19 +56,19 @@ Business tools → Greeting message → On. Send to: Everyone.
 
 > Hi, thank you for reaching out to KARMEN MOVES 🤍
 > I'm Karmen, and I read every message myself. I'll reply as soon as I can, usually within the same day.
-> If you've sent an order request, I'll confirm the price, stock and delivery with you before you pay anything.
+> If you've sent an order enquiry, I'll confirm the price, stock and delivery with you before you pay anything.
 
 ### 2. Away message
 Business tools → Away message → On. Schedule: Outside of business hours.
 
 > Hi, thank you for your message. I'm away right now, but I'll get back to you personally as soon as I'm back.
-> Your order request is safe here with me. Nothing needs to be paid until I confirm everything with you.
+> Your order enquiry is safe here with me. No payment is needed until I confirm everything with you.
 
 ### 3. Quick replies
 Business tools → Quick replies → tap **+**. Type the shortcut (like `/confirm`) in a chat to send it instantly. Fill in the parts in [brackets] each time.
 
 **/received**
-> Hi [name], I've received your order request ([ref]). Thank you so much! Let me check stock and delivery for you, and I'll come back to you shortly.
+> Hi [name], I've received your order enquiry ([ref]). Thank you so much! Let me check stock and delivery for you, and I'll come back to you shortly.
 
 **/confirm**
 > Hi [name], here's your order summary:
@@ -72,7 +80,7 @@ Business tools → Quick replies → tap **+**. Type the shortcut (like `/confir
 >
 > If everything looks right, just reply "Yes" and I'll send payment details.
 
-**/pay**
+**/pay** (send only after the customer has agreed to the confirmed price)
 > Thank you! You can pay by:
 > [bank name] · [account name] · [account number]
 > or DuitNow / Touch 'n Go: [details]

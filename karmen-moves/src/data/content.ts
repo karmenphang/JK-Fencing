@@ -19,12 +19,6 @@ export const site = {
   year: new Date().getFullYear(),
 }
 
-/** Order form options. Edit freely. */
-export const orderSettings = {
-  maxQty: 5,
-  paymentOptions: ['Online bank transfer', 'DuitNow QR', "Touch 'n Go eWallet", 'Discuss with Karmen'],
-}
-
 export const whatsappLink = (message: string) =>
   `https://wa.me/${site.whatsappNumber}?text=${encodeURIComponent(message)}`
 
@@ -200,7 +194,7 @@ export const faqs = [
   },
   {
     q: 'How do I order?',
-    a: 'Use the order form near the bottom of this page. It sends me a neat order request on WhatsApp. I will reply to confirm price, stock and delivery, and you only pay after we agree.',
+    a: 'Tap “Order this” on any product, or use the order enquiry form near the bottom of this page. It sends me your enquiry on WhatsApp. It is an enquiry only, so no payment is needed. I will review it personally and reply to confirm the details with you.',
   },
   {
     q: 'Do you deliver across Malaysia?',

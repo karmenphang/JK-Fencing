@@ -116,7 +116,17 @@ export function Nav({ alwaysVisible = false }: { alwaysVisible?: boolean }) {
 
 /** Mobile only: calm WhatsApp bar pinned to the bottom once past the hero. */
 export function MobileEnquiryBar() {
-  const visible = useScrolledPast(1.6)
+  const past = useScrolledPast(1.6)
+  // Step aside while the order form is on screen so it never covers a field
+  const [overForm, setOverForm] = useState(false)
+  useEffect(() => {
+    const el = document.getElementById('contact')
+    if (!el || !('IntersectionObserver' in window)) return
+    const io = new IntersectionObserver(([e]) => setOverForm(e.isIntersecting), { rootMargin: '0px 0px -10% 0px' })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
+  const visible = past && !overForm
   return (
     <div
       className={`fixed inset-x-0 bottom-0 z-40 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] transition-all duration-700 ease-[var(--ease-silk)] md:hidden ${
