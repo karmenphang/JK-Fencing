@@ -44,3 +44,24 @@ All editable content lives in `src/data/content.ts`.
 8. **Legal.** Have the privacy notice and disclaimer reviewed.
 
 Note: the MOB website could not be reached from the build environment, so no MOB copy, specs or photos were used. Everything MOB specific is a clearly labelled slot.
+
+## MOB Pelvic-Hold scroll demonstration (`#pelvic-demo`)
+
+A pinned, scroll scrubbed demonstration between the Collection and Why sections.
+Six scenes, all driven by one scroll value, so scrolling back reverses it exactly:
+the problem, the product reveal, Step 1 position, Step 2 sit, Step 3 close up, the final showcase.
+
+* `src/components/PelvicDemo.tsx` · pinned stage, GSAP ScrollTrigger timeline, captions, annotations, finale
+* `src/demo/pelvicScene.ts` · Three.js stage: studio light and soft shadows, a generic office chair, a neutral clay figure with a natural sit down motion (hip hinge, planted feet, two bone leg IK), camera path
+* `src/demo/turntable.ts` · scroll scrubbed photo sequence for the product reveal
+
+Three.js loads only when a visitor scrolls near the section (about 136 KB compressed), so the rest of the site is not slowed down.
+With reduced motion turned on, the section becomes calm still steps rendered once from the same 3D scene. Without WebGL it falls back to photo slots.
+
+### To make it fully genuine (all in `pelvicDemo`, `src/data/content.ts`)
+
+1. **Turntable photos.** Ask MOB for a 360° photo sequence of the Pelvic-Hold (ideally 36 frames, 10° apart, same camera, light and background). Save them as `public/images/pelvic-hold/turntable-01.webp` etc. and list them in `turntableFrames`. They scrub automatically as the visitor scrolls.
+2. **Product on the chair.** Today a translucent, dashed outline volume marks where the product goes. It is deliberately not the product's shape. If MOB supplies an accurate 3D model (.glb), set `modelUrl` and replace the placeholder volume in `pelvicScene.ts` (a GLTFLoader swap). Otherwise keep the placeholder and rely on the photos.
+3. **Placement.** Set `placement.z` (metres from seat centre, + towards the front edge) and `placement.rotationY` from MOB's official instructions, then `verified: true`.
+4. **Step wording.** Replace `steps.position.sub` and `steps.sit.sub` with MOB's verified instructions and set `pending: false`.
+5. **Close up labels.** Replace the two "Support area" annotation labels with MOB's own names for those areas, or remove them.

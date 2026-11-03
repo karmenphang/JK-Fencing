@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { products, type Product, whatsappLink } from '../data/content'
 import { MediaSlot } from './MediaSlot'
 import { Reveal } from '../lib/Reveal'
@@ -108,6 +108,12 @@ function ProductDialog({ product, dialogRef }: { product: Product; dialogRef: Re
 
 function Card({ product, i }: { product: Product; i: number }) {
   const dlg = useRef<HTMLDialogElement>(null)
+  // Other sections (like the Pelvic-Hold demonstration) can open this product's details
+  useEffect(() => {
+    const on = (e: Event) => { if ((e as CustomEvent<string>).detail === product.id && !dlg.current?.open) dlg.current?.showModal() }
+    window.addEventListener('km:product', on)
+    return () => window.removeEventListener('km:product', on)
+  }, [product.id])
   return (
     <Reveal as="article" delay={i * 0.12} className="group flex flex-col rounded-[32px] bg-cream p-3 shadow-[0_30px_70px_-55px_rgba(30,29,27,0.6)] transition-shadow duration-700 hover:shadow-[0_40px_90px_-50px_rgba(30,29,27,0.6)]">
       <Gallery product={product} />

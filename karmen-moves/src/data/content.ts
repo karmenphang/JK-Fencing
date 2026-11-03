@@ -217,7 +217,41 @@ export const nav = [
   { href: '#story', label: 'Story' },
   { href: '#neck-healer', label: 'Neck Healer' },
   { href: '#collection', label: 'Collection' },
+  { href: '#pelvic-demo', label: 'How to use' },
   { href: '#why', label: 'Why' },
   { href: '#care', label: 'Care' },
   { href: '#contact', label: 'Contact' },
 ]
+
+/**
+ * MOB Pelvic-Hold scroll demonstration.
+ *
+ * Everything product specific is a slot. Until MOB supplies official photos and
+ * instructions, the demo shows labelled placeholders and never a guessed product.
+ */
+export const pelvicDemo = {
+  /**
+   * Official MOB turntable photos, in order, same framing and lighting, e.g. 36 frames
+   * at 10° steps: ['/images/pelvic-hold/turntable-01.webp', ...]. Empty = placeholder frames.
+   */
+  turntableFrames: [] as string[],
+  placeholderFrameCount: 36,
+  /** Accurate 3D model (.glb) supplied or approved by MOB. null = labelled placeholder volume on the chair. */
+  modelUrl: null as string | null,
+  /**
+   * Where the support sits on the seat, in metres from the seat centre (+z = towards the front edge).
+   * Set from MOB's official instructions. `verified` false shows a "provisional" note in the demo.
+   */
+  placement: { z: 0, rotationY: 0, verified: false },
+  steps: {
+    position: { sub: 'Place the support on your chair seat. The exact position and orientation will follow MOB’s official guide.', pending: true },
+    sit: { sub: 'Lower yourself onto the cushion gently, the way you normally sit. MOB’s official sitting guidance will be added here.', pending: true },
+    settle: { sub: 'Take a moment to settle in until it feels right for you. Everyone’s comfortable position is a little different.', pending: false },
+  },
+  /** Close up labels. Only the product name is certain. Support areas come from MOB’s material. */
+  annotations: [
+    { id: 'product', label: 'MOB Pelvic-Hold Seat Support', pending: false },
+    { id: 'area1', label: 'Support area · label from MOB’s guide', pending: true },
+    { id: 'area2', label: 'Support area · label from MOB’s guide', pending: true },
+  ],
+}

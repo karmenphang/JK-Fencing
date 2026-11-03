@@ -4,6 +4,7 @@ import { Hero } from './components/Hero'
 import { FounderStory } from './components/FounderStory'
 import { NeckHealer } from './components/NeckHealer'
 import { Collection } from './components/Collection'
+import { PelvicDemo } from './components/PelvicDemo'
 import { Why } from './components/Why'
 import { Care } from './components/Care'
 import { Contact } from './components/Contact'
@@ -59,6 +60,7 @@ export default function App() {
         <FounderStory />
         <NeckHealer />
         <Collection />
+        <PelvicDemo />
         <Why />
         <Care />
         <Contact />
