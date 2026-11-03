@@ -12,11 +12,17 @@ export const site = {
   tagline: 'Comfort. Mobility. Independence.',
   founder: 'Karmen Phang',
   location: 'Malaysia',
-  // TODO before launch: Malaysian number in international format, digits only, e.g. 60123456789
-  whatsappNumber: '60XXXXXXXXX',
+  whatsappNumber: '601116350635', // international format, digits only
+  whatsappDisplay: '+60 11 1635 0635',
   email: 'hello@karmenmoves.com', // TODO: confirm real inbox
   mobOfficialUrl: 'https://www.neckandbackpain.my/',
   year: new Date().getFullYear(),
+}
+
+/** Order form options. Edit freely. */
+export const orderSettings = {
+  maxQty: 5,
+  paymentOptions: ['Online bank transfer', 'DuitNow QR', "Touch 'n Go eWallet", 'Discuss with Karmen'],
 }
 
 export const whatsappLink = (message: string) =>
@@ -194,7 +200,7 @@ export const faqs = [
   },
   {
     q: 'How do I order?',
-    a: 'Send me a WhatsApp message. I will answer your questions, confirm availability and price, and guide you through ordering personally.',
+    a: 'Use the order form near the bottom of this page. It sends me a neat order request on WhatsApp. I will reply to confirm price, stock and delivery, and you only pay after we agree.',
   },
   {
     q: 'Do you deliver across Malaysia?',

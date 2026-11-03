@@ -34,7 +34,7 @@ npm run build:preview  # one self contained HTML file in dist-preview/
 
 All editable content lives in `src/data/content.ts`.
 
-1. **WhatsApp number.** Set `site.whatsappNumber` (digits only, e.g. `60123456789`).
+1. **WhatsApp number.** Set to +60 11 1635 0635 (`site.whatsappNumber`). See `WHATSAPP_TEMPLATES.md` for the order flow and auto replies.
 2. **Email.** Confirm `site.email`.
 3. **Founder photos.** Four portrait slots, one per chapter of the story. Add `src` (and ideally `srcSet`) to each `media` entry. Put images in `public/images/`.
 4. **Official MOB product photos.** Gallery slots for each product plus the Neck Healer showcase (hero, close up, usage, lifestyle). Use only official or MOB approved images.

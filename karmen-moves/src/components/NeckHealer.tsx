@@ -6,6 +6,7 @@ import { neckHealerShowcase as show, products, site, whatsappLink } from '../dat
 import { MediaSlot } from './MediaSlot'
 import { ArrowIcon, ExternalIcon, WhatsAppIcon } from '../lib/icons'
 import { Reveal } from '../lib/Reveal'
+import { startOrder } from './Contact'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -63,6 +64,9 @@ function EnquiryPanel() {
             )}
           </div>
           <div className="flex flex-col gap-3">
+            <button type="button" onClick={() => startOrder(product.name)} className="btn btn-primary w-full">
+              Order the Neck Healer <ArrowIcon />
+            </button>
             <a
               href={whatsappLink('Hi Karmen, I would like to enquire about the MOB Neck Healer.')}
               target="_blank"

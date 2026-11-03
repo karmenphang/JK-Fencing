@@ -3,6 +3,7 @@ import { products, type Product, whatsappLink } from '../data/content'
 import { MediaSlot } from './MediaSlot'
 import { Reveal } from '../lib/Reveal'
 import { ArrowIcon, ExternalIcon, WhatsAppIcon } from '../lib/icons'
+import { startOrder } from './Contact'
 
 function Gallery({ product, rounded = 'rounded-[24px]' }: { product: Product; rounded?: string }) {
   const [index, setIndex] = useState(0)
@@ -89,6 +90,9 @@ function ProductDialog({ product, dialogRef }: { product: Product; dialogRef: Re
             Comfort and support product. Not a medical device claim and not a substitute for professional advice.
           </p>
           <div className="mt-auto flex flex-col gap-3 pt-8">
+            <button type="button" onClick={() => { dialogRef.current?.close(); startOrder(product.name) }} className="btn btn-primary w-full">
+              Order this <ArrowIcon />
+            </button>
             <a href={whatsappLink(`Hi Karmen, I would like to learn more about the ${product.name}.`)} target="_blank" rel="noopener" className="btn btn-sage w-full">
               <WhatsAppIcon /> Enquire on WhatsApp
             </a>
@@ -127,6 +131,9 @@ function Card({ product, i }: { product: Product; i: number }) {
           >
             <WhatsAppIcon /> Enquire
           </a>
+          <button type="button" onClick={() => startOrder(product.name)} className="btn btn-primary !min-h-11 w-full">
+            Order this <ArrowIcon />
+          </button>
         </div>
       </div>
       <ProductDialog product={product} dialogRef={dlg} />
