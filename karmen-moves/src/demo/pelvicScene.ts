@@ -32,7 +32,11 @@ const deg = THREE.MathUtils.degToRad
 
 // ---------- dimensions (metres) ----------
 const SEAT_TOP = 0.44
-const SUPPORT = { w: 0.4, h: 0.065, d: 0.38 } // placeholder footprint only, not MOB's real shape
+/**
+ * MOB Pelvic-Hold form, traced from a real photo of the product (see content.ts → pelvicDemo.form).
+ * Overwritten at start up from opts.form. Approximate until MOB confirms dimensions.
+ */
+const SUPPORT = { w: 0.42, h: 0.06, d: 0.4, corner: 0.075, frontBow: 0.008 }
 const ANKLE = { y: 0.085, z: 0.4 }
 const THIGH = 0.42
 const SHIN = 0.42
@@ -61,7 +65,19 @@ export interface PelvicStage {
   dispose(): void
 }
 
-export function createPelvicStage(canvas: HTMLCanvasElement, opts: { placementZ: number; placementRotY: number }): PelvicStage {
+export interface StageOptions {
+  placementZ: number
+  placementRotY: number
+  /** Measured or traced product form in metres. */
+  form?: { w: number; d: number; h: number; corner: number }
+  /** Texture images taken from the genuine product photo. */
+  textures?: { mesh: string; label: string; colour: string }
+  /** Called when a texture finishes loading, so the host can redraw. */
+  onAsset?: () => void
+}
+
+export function createPelvicStage(canvas: HTMLCanvasElement, opts: StageOptions): PelvicStage {
+  if (opts.form) Object.assign(SUPPORT, opts.form)
   const mobileGPU = Math.min(window.innerWidth, window.innerHeight) < 700
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance', preserveDrawingBuffer: false })
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, mobileGPU ? 1.75 : 2))
@@ -185,20 +201,77 @@ export function createPelvicStage(canvas: HTMLCanvasElement, opts: { placementZ:
     chair.add(arm)
   }
 
-  // ---------- placeholder support volume (NOT the MOB product shape) ----------
+  // ---------- MOB Pelvic-Hold, traced from a genuine photo ----------
+  // Top outline and soft rounded edges follow the photo. Mesh texture, colour and the label
+  // are the photo's own pixels. The camera path only ever shows the faces the photo shows
+  // (top, front, the sitter's left side), never the unseen underside or back.
   const support = new THREE.Group()
   scene.add(support)
-  const supportMat = new THREE.MeshStandardMaterial({ color: 0xa9b39c, roughness: 0.45, metalness: 0, transparent: true, opacity: 0.62 })
-  const supportGeo = new RoundedBoxGeometry(SUPPORT.w, SUPPORT.h, SUPPORT.d, 5, 0.028)
+  const supportShape = (() => {
+    const { w, d, corner: r } = SUPPORT
+    const hw = w / 2, hd = d / 2, bow = SUPPORT.frontBow
+    const sh = new THREE.Shape()
+    // shape +y is the back edge, -y the front edge (slightly convex, as in the photo)
+    sh.moveTo(-hw + r, hd)
+    sh.lineTo(hw - r, hd)
+    sh.quadraticCurveTo(hw, hd, hw, hd - r)
+    sh.lineTo(hw, -hd + r)
+    sh.quadraticCurveTo(hw, -hd, hw - r, -hd)
+    sh.quadraticCurveTo(0, -hd - bow * 2, -hw + r, -hd)
+    sh.quadraticCurveTo(-hw, -hd, -hw, -hd + r)
+    sh.lineTo(-hw, hd - r)
+    sh.quadraticCurveTo(-hw, hd, -hw + r, hd)
+    return sh
+  })()
+  const bevel = Math.min(0.022, SUPPORT.h * 0.38)
+  const supportGeo = new THREE.ExtrudeGeometry(supportShape, {
+    depth: SUPPORT.h - bevel * 2,
+    bevelEnabled: true,
+    bevelThickness: bevel,
+    bevelSize: bevel * 0.9,
+    bevelSegments: 6,
+    curveSegments: 18,
+  })
+  supportGeo.rotateX(-Math.PI / 2) // extrusion becomes thickness (y), shape +y becomes the back (-z)
+  supportGeo.center()
+  const meshColour = new THREE.Color(opts.textures?.colour ?? '#2a6459')
+  const supportMat = new THREE.MeshStandardMaterial({ color: meshColour, roughness: 0.93, metalness: 0, transparent: true, opacity: 1 })
   const supportMesh = new THREE.Mesh(supportGeo, supportMat)
   supportMesh.castShadow = true
+  supportMesh.receiveShadow = true
   support.add(supportMesh)
-  const edges = new THREE.LineSegments(
-    new THREE.EdgesGeometry(new THREE.BoxGeometry(SUPPORT.w, SUPPORT.h, SUPPORT.d)),
-    new THREE.LineDashedMaterial({ color: 0xb8975a, dashSize: 0.018, gapSize: 0.012, transparent: true }),
-  )
-  edges.computeLineDistances()
-  support.add(edges)
+
+  // label patch: the photo's own label, rectified, lying on the top near the front, on the sitter's left
+  const labelMat = new THREE.MeshStandardMaterial({ color: 0x1b1b1b, roughness: 0.7, transparent: true, opacity: 1, polygonOffset: true, polygonOffsetFactor: -2 })
+  const label = new THREE.Mesh(new THREE.PlaneGeometry(0.118, 0.054), labelMat)
+  label.rotation.x = -Math.PI / 2
+  label.position.set(SUPPORT.w * 0.25, SUPPORT.h / 2 + 0.0012, SUPPORT.d / 2 - 0.068)
+  label.receiveShadow = true
+  support.add(label)
+
+  if (opts.textures) {
+    const loader = new THREE.TextureLoader()
+    loader.load(opts.textures.mesh, (t) => {
+      t.colorSpace = THREE.SRGBColorSpace
+      t.wrapS = t.wrapT = THREE.MirroredRepeatWrapping
+      t.repeat.set(7, 7) // one photo tile covers about 14 cm of the real mesh
+      t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy())
+      supportMat.map = t
+      supportMat.bumpMap = t
+      supportMat.bumpScale = 1.2
+      supportMat.color.setRGB(1.0, 0.92, 1.04) // texture carries the real colour; balance measured against the photo under these lights
+      supportMat.needsUpdate = true
+      opts.onAsset?.()
+    })
+    loader.load(opts.textures.label, (t) => {
+      t.colorSpace = THREE.SRGBColorSpace
+      t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy())
+      labelMat.map = t
+      labelMat.color.set(0xffffff)
+      labelMat.needsUpdate = true
+      opts.onAsset?.()
+    })
+  }
   const restPos = new THREE.Vector3(0, SEAT_TOP + SUPPORT.h / 2, opts.placementZ)
 
   // ---------- neutral clay figure (about 1.70 m, standard proportions) ----------
@@ -311,7 +384,7 @@ export function createPelvicStage(canvas: HTMLCanvasElement, opts: { placementZ:
   }
 
   // ---------- camera ----------
-  const camPos = V(), camTgt = V(), a = V(), b = V()
+  const camPos = V(), camTgt = V(), a = V(), b = V(), tmpStart = V()
   let portrait = false
   function cameraAt(p: number) {
     let i = 0
@@ -357,10 +430,15 @@ export function createPelvicStage(canvas: HTMLCanvasElement, opts: { placementZ:
     const appear = range(p, 0.3, 0.34)
     const travel = smoother(range(p, 0.34, 0.47))
     const land = range(p, 0.47, 0.5)
-    supportMat.opacity = 0.62 * appear
-    ;(edges.material as THREE.LineDashedMaterial).opacity = appear
+    supportMat.opacity = appear
+    labelMat.opacity = appear
+    supportMat.transparent = labelMat.transparent = appear < 0.999
+    supportMesh.castShadow = appear > 0.5
     support.visible = appear > 0.001
-    const start = b.set(0.38, 1.08, 0.95)
+    // hand off from the photo: start on the camera ray through the photo card's centre on screen
+    const wide = w >= 1024
+    tmpStart.set(wide ? 0.36 : 0, wide ? 0.02 : -0.2, 0.5).unproject(camera).sub(camera.position).normalize()
+    const start = b.copy(camera.position).addScaledVector(tmpStart, wide ? 1.7 : 2.3)
     // arc: lerp with a lift so it travels like a placed object, not a slide
     support.position.set(
       lerp(start.x, restPos.x, travel),
@@ -371,7 +449,8 @@ export function createPelvicStage(canvas: HTMLCanvasElement, opts: { placementZ:
     const settle = Math.sin(land * Math.PI) * (1 - land) * 0.006
     support.position.y -= settle
     support.scale.set(1 + settle * 2, 1 - settle * 6, 1 + settle * 2)
-    support.rotation.set(lerp(deg(28), 0, travel), lerp(deg(-38), opts.placementRotY, travel), lerp(deg(-10), 0, travel))
+    // in flight the top stays tilted towards the camera, so the unphotographed underside is never shown
+    support.rotation.set(lerp(deg(22), 0, travel), lerp(deg(-30), opts.placementRotY, travel), lerp(deg(-8), 0, travel))
 
     // figure: fades in standing, sits down, stays seated for the close up and the finale
     const fig = range(p, 0.5, 0.535)
@@ -431,7 +510,7 @@ export function createPelvicStage(canvas: HTMLCanvasElement, opts: { placementZ:
       const m = o as THREE.Mesh
       if (m.geometry) m.geometry.dispose()
     })
-    ;[fabric, shell, metal, rubber, clay, supportMat, edges.material as THREE.Material, floor.material as THREE.Material, contact.material as THREE.Material].forEach((m) => m.dispose())
+    ;[fabric, shell, metal, rubber, clay, supportMat, labelMat, floor.material as THREE.Material, contact.material as THREE.Material].forEach((m) => m.dispose())
     contactTex.dispose()
     renderer.dispose()
   }

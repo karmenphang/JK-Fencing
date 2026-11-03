@@ -22,12 +22,40 @@ const win = (p: number, a: number, b: number, f = 0.03) => Math.min(range(p, a, 
 
 const CAPTIONS = [
   { id: 'problem', a: -1, b: 0.15, eyebrow: 'MOB Pelvic-Hold · How to use', title: 'You’re sitting.\nBut are you supported?', sub: 'Scroll to see how the MOB Pelvic-Hold Seat Support fits into your everyday chair.' },
-  { id: 'reveal', a: 0.165, b: 0.32, eyebrow: 'Introducing', title: 'MOB Pelvic-Hold\nSeat Support', sub: 'Made by MOB Neck & Back Rest. Shown from official product photographs.' },
+  { id: 'reveal', a: 0.165, b: 0.32, eyebrow: 'Introducing', title: 'MOB Pelvic-Hold\nSeat Support', sub: 'Made by MOB Neck & Back Rest. This is the real cushion, photographed on my own chair.' },
   { id: 'position', a: 0.335, b: 0.5, eyebrow: 'Step 1', title: 'Position your support.', sub: demo.steps.position.sub, pending: demo.steps.position.pending || !demo.placement.verified },
   { id: 'sit', a: 0.51, b: 0.7, eyebrow: 'Step 2', title: 'Sit comfortably.', sub: demo.steps.sit.sub, pending: demo.steps.sit.pending },
   { id: 'settle', a: 0.71, b: 0.865, eyebrow: 'Step 3', title: 'Find your comfortable position.', sub: demo.steps.settle.sub, pending: demo.steps.settle.pending },
 ]
 const DOTS = [0.07, 0.24, 0.42, 0.6, 0.78, 0.94]
+const photo = demo.photo
+const hasFrames = demo.turntableFrames.length > 0
+const stageOptions = (onAsset?: () => void) => ({
+  placementZ: demo.placement.z,
+  placementRotY: demo.placement.rotationY,
+  form: demo.form,
+  textures: demo.textures,
+  onAsset,
+})
+
+/** The genuine product photo, never cropped into a different shape, only framed. */
+function ProductPhoto({ className = '', style, imgProps }: { className?: string; style?: React.CSSProperties; imgProps?: React.ImgHTMLAttributes<HTMLImageElement> }) {
+  return (
+    <div className={`relative overflow-hidden bg-champagne/40 ${className}`} style={style}>
+      <img
+        src={photo.src}
+        srcSet={photo.srcSet}
+        sizes="(min-width:1024px) 40vw, 90vw"
+        alt={photo.alt}
+        loading="lazy"
+        decoding="async"
+        className="absolute inset-0 h-full w-full object-cover"
+        style={{ objectPosition: `${photo.focus.x}% ${photo.focus.y}%` }}
+        {...imgProps}
+      />
+    </div>
+  )
+}
 
 function Pending({ children = 'Pending MOB verification' }: { children?: string }) {
   return (
@@ -40,7 +68,7 @@ function Pending({ children = 'Pending MOB verification' }: { children?: string 
 function FinalCard({ still }: { still?: boolean }) {
   return (
     <div className={`mx-auto grid w-full max-w-4xl items-center gap-6 rounded-[32px] bg-cream/95 p-5 shadow-[0_40px_100px_-50px_rgba(30,29,27,0.55)] backdrop-blur-md sm:p-8 md:grid-cols-[0.9fr_1.1fr] md:gap-10 ${still ? '' : 'ring-1 ring-charcoal/5'}`}>
-      <MediaSlot media={product.gallery[1]} className="aspect-[4/3] w-full rounded-[22px] md:aspect-[4/5]" sizes="(min-width:768px) 36vw, 90vw" />
+      <ProductPhoto className="aspect-[4/3] w-full rounded-[22px] md:aspect-[4/5]" />
       <div>
         <p className="eyebrow text-gold">MOB Pelvic-Hold Seat Support</p>
         <h3 className="display mt-4 text-[clamp(2rem,5.2vw,3.4rem)] leading-[1.02]">Your everyday sitting routine deserves attention.</h3>
@@ -71,7 +99,7 @@ function StillSteps({ stills }: { stills: (string | null)[] }) {
         {items.map((c, i) => (
           <article key={c.id} className="grid items-center gap-6 md:grid-cols-2 md:gap-12">
             {i === 1 || !c.img ? (
-              <MediaSlot media={product.gallery[i === 1 ? 0 : 2]} className="aspect-[4/3] w-full rounded-[28px]" />
+              i === 1 ? <ProductPhoto className="aspect-[4/3] w-full rounded-[28px]" /> : <MediaSlot media={product.gallery[2]} className="aspect-[4/3] w-full rounded-[28px]" />
             ) : (
               <img src={c.img} alt={`${c.title.replace('\n', ' ')} Illustrated with a placeholder for the product.`} className="aspect-[4/3] w-full rounded-[28px] bg-champagne/40 object-cover" />
             )}
@@ -98,6 +126,7 @@ export function PelvicDemo() {
   const stage = useRef<PelvicStage | null>(null)
   const turntable = useRef<Turntable | null>(null)
   const progress = useRef(0)
+  const redraw = useRef<() => void>(() => {})
   const [ready, setReady] = useState(false)
   const [failed, setFailed] = useState(false)
   const [stills, setStills] = useState<(string | null)[] | null>(null)
@@ -120,14 +149,21 @@ export function PelvicDemo() {
           box.style.cssText = 'position:fixed;left:-9999px;top:0;width:960px;height:720px'
           box.appendChild(c)
           document.body.appendChild(box)
-          const s = createPelvicStage(c, { placementZ: demo.placement.z, placementRotY: demo.placement.rotationY })
-          const shots = [0.08, 0, 0.49, 0.69, 0.85].map((p, i) => (i === 1 ? null : s.snapshot(p, 960, 720)))
-          s.dispose()
+          let loaded = 0
+          let s: PelvicStage | null = null
+          await new Promise<void>((done) => {
+            const timer = setTimeout(done, 3000)
+            s = createPelvicStage(c, stageOptions(() => { if (++loaded === 2) { clearTimeout(timer); done() } }))
+          })
+          if (!s) return
+          const st = s as PelvicStage
+          const shots = [0.08, 0, 0.49, 0.69, 0.85].map((p, i) => (i === 1 ? null : st.snapshot(p, 960, 720)))
+          st.dispose()
           box.remove()
           setStills(shots)
           return
         }
-        stage.current = createPelvicStage(canvas.current!, { placementZ: demo.placement.z, placementRotY: demo.placement.rotationY })
+        stage.current = createPelvicStage(canvas.current!, stageOptions(() => redraw.current()))
         setReady(true)
       } catch {
         setFailed(true)
@@ -144,7 +180,7 @@ export function PelvicDemo() {
   useLayoutEffect(() => {
     if (reduce || failed || !track.current) return
     const q = gsap.utils.selector(track)
-    if (ttCanvas.current) turntable.current = createTurntable(ttCanvas.current, demo.turntableFrames, demo.placeholderFrameCount)
+    if (hasFrames && ttCanvas.current) turntable.current = createTurntable(ttCanvas.current, demo.turntableFrames, demo.placeholderFrameCount)
 
     let raf = 0
     const paint = () => {
@@ -152,6 +188,15 @@ export function PelvicDemo() {
       const p = progress.current
       stage.current?.render(p)
       turntable.current?.draw(range(p, 0.18, 0.3))
+
+      // genuine photo: a slow scroll controlled push in, from the chair to the cushion (no rotation, no retouching)
+      const kb = q('[data-kenburns]')[0] as HTMLElement | undefined
+      if (kb) {
+        const t = range(p, 0.17, 0.31)
+        const e = t * t * (3 - 2 * t)
+        // zoom towards the cushion and drift it to the centre of the frame
+        kb.style.transform = `translate(${(50 - photo.focus.x) * 0.55 * e}%, ${(50 - photo.focus.y) * 0.55 * e}%) scale(${1 + 0.85 * e})`
+      }
 
       // captions: lift in, lift out, fully reversible
       CAPTIONS.forEach((c) => {
@@ -165,7 +210,7 @@ export function PelvicDemo() {
       })
 
       // ivory veil behind the photo sequence and the finale
-      const veil = Math.max(0.86 * win(p, 0.15, 0.335, 0.035), 0.72 * range(p, 0.875, 0.93))
+      const veil = Math.max(0.95 * win(p, 0.15, 0.335, 0.035), 0.72 * range(p, 0.875, 0.93))
       const v = q('[data-veil]')[0] as HTMLElement
       if (v) v.style.opacity = String(veil)
 
@@ -176,8 +221,9 @@ export function PelvicDemo() {
         const out = range(p, 0.295, 0.335)
         card.style.opacity = String(Math.min(inn, 1 - out))
         card.style.visibility = Math.min(inn, 1 - out) < 0.01 ? 'hidden' : 'visible'
-        const sc = 0.86 + 0.14 * (1 - Math.pow(1 - inn, 3)) - 0.42 * out
-        card.style.transform = `translate3d(${out * 18}vw, ${(1 - inn) * 40 + out * 10}px, 0) scale(${sc})`
+        // the photo dissolves in place while the 3D cushion lifts out of it
+        const sc = 0.86 + 0.14 * (1 - Math.pow(1 - inn, 3)) + 0.04 * out
+        card.style.transform = `translate3d(0, ${(1 - inn) * 40}px, 0) scale(${sc})`
       }
 
       // close up annotations: dot on the 3D point, label nudged into view, line between them
@@ -241,6 +287,7 @@ export function PelvicDemo() {
       if (bar) bar.style.transform = `scaleX(${p})`
     }
     const schedule = () => { if (!raf) raf = requestAnimationFrame(paint) }
+    redraw.current = schedule
 
     const ctx = gsap.context(() => {
       const proxy = { p: 0 }
@@ -319,16 +366,22 @@ export function PelvicDemo() {
             {!demo.placement.verified && (
               <div data-placement-note className="invisible absolute left-0 top-0 opacity-0">
                 <p className="-translate-x-1/2 whitespace-nowrap rounded-full bg-charcoal/85 px-3 py-1.5 text-[0.65rem] text-ivory">
-                  Placeholder shape · provisional position
+                  {demo.form.approximate ? 'Shape traced from a real photo · placement provisional' : 'Placement provisional'}
                 </p>
               </div>
             )}
           </div>
 
-          {/* photo sequence (official MOB turntable photos go here) */}
+          {/* product reveal: the genuine photo (or, later, an official MOB turntable sequence) */}
           <div className="pointer-events-none absolute inset-0 grid place-items-center px-6 pt-[18svh] lg:pl-[38%] lg:pt-0">
-            <div data-turntable className="invisible aspect-[4/5] w-[min(70vw,23rem)] overflow-hidden rounded-[28px] opacity-0 shadow-[0_50px_100px_-50px_rgba(30,29,27,0.6)] will-change-transform lg:w-[min(30vw,25rem)]">
-              <canvas ref={ttCanvas} aria-hidden="true" className="h-full w-full" />
+            <div data-turntable className={`invisible overflow-hidden rounded-[28px] opacity-0 shadow-[0_50px_100px_-50px_rgba(30,29,27,0.6)] will-change-transform ${hasFrames ? 'aspect-[4/5] w-[min(70vw,23rem)] lg:w-[min(30vw,25rem)]' : 'aspect-[4/3] w-[min(88vw,27rem)] lg:w-[min(40vw,34rem)]'}`}>
+              {hasFrames ? (
+                <canvas ref={ttCanvas} aria-hidden="true" className="h-full w-full" />
+              ) : (
+                <div data-kenburns className="h-full w-full will-change-transform" style={{ transformOrigin: `${photo.focus.x}% ${photo.focus.y}%` }}>
+                  <ProductPhoto className="h-full w-full" imgProps={{ loading: 'eager', style: { objectPosition: 'center' } }} />
+                </div>
+              )}
             </div>
           </div>
 
@@ -362,7 +415,7 @@ export function PelvicDemo() {
           </div>
 
           <p className="pointer-events-none absolute bottom-[calc(env(safe-area-inset-bottom)+1rem)] right-4 hidden max-w-[17rem] text-right text-[0.65rem] leading-snug text-stone lg:block">
-            Demonstration preview. Product shown as a labelled placeholder until MOB’s official photos and instructions are added.
+            The 3D cushion is traced from a real photo of the MOB Pelvic-Hold, using its own mesh, colour and label. Proportions are approximate and placement is provisional until confirmed with MOB.
           </p>
         </div>
       </div>

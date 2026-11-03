@@ -58,6 +58,13 @@ the problem, the product reveal, Step 1 position, Step 2 sit, Step 3 close up, t
 Three.js loads only when a visitor scrolls near the section (about 136 KB compressed), so the rest of the site is not slowed down.
 With reduced motion turned on, the section becomes calm still steps rendered once from the same 3D scene. Without WebGL it falls back to photo slots.
 
+### Product presentation (from Karmen's genuine photo)
+
+* **Reveal:** the real photo (`src/assets/pelvic-hold/pelvic-hold-on-chair-*.webp`), unedited, with a scroll controlled push in towards the cushion. No rotation is faked.
+* **3D cushion:** a simple form traced from the same photo (rounded outline, soft edges, slightly convex front). Its mesh texture (`mesh.webp`), colour (`#2a6459`, measured) and label (`label.webp`, perspective corrected) are the photo's own pixels. The camera only shows the faces the photo shows (top, front, the sitter's left side). In flight its top stays tilted towards the camera, so the unphotographed underside is never seen.
+* **Proportions are approximate** (`form`, about 42 × 40 × 6 cm) because one angled photo cannot give exact sizes. Replace them with MOB's official measurements and set `approximate: false`.
+* **Placement stays labelled provisional** until `placement.verified` is true.
+
 ### To make it fully genuine (all in `pelvicDemo`, `src/data/content.ts`)
 
 1. **Turntable photos.** Ask MOB for a 360° photo sequence of the Pelvic-Hold (ideally 36 frames, 10° apart, same camera, light and background). Save them as `public/images/pelvic-hold/turntable-01.webp` etc. and list them in `turntableFrames`. They scrub automatically as the visitor scrolls.

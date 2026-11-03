@@ -229,7 +229,29 @@ export const nav = [
  * Everything product specific is a slot. Until MOB supplies official photos and
  * instructions, the demo shows labelled placeholders and never a guessed product.
  */
+import pelvicPhoto1448 from '../assets/pelvic-hold/pelvic-hold-on-chair-1448.webp'
+import pelvicPhoto960 from '../assets/pelvic-hold/pelvic-hold-on-chair-960.webp'
+import pelvicMesh from '../assets/pelvic-hold/mesh.webp'
+import pelvicLabel from '../assets/pelvic-hold/label.webp'
+
 export const pelvicDemo = {
+  /**
+   * Genuine photo of the MOB Pelvic-Hold supplied by Karmen, used unedited for the reveal.
+   * focus: where the cushion sits in the frame (percent), used for the scroll push in.
+   */
+  photo: {
+    src: pelvicPhoto1448,
+    srcSet: `${pelvicPhoto960} 960w, ${pelvicPhoto1448} 1448w`,
+    alt: 'The green MOB Pelvic-Hold Seat Support on a beige chair seat, with Karmen’s hand resting on it and its label reading Pelvic Support, Spinal Support, Seating Support',
+    focus: { x: 25, y: 82 },
+  },
+  /**
+   * 3D form traced from that photo, in metres. Approximate: a single angled photo cannot give
+   * exact dimensions. Replace with MOB's official measurements and set `approximate: false`.
+   */
+  form: { w: 0.42, d: 0.4, h: 0.06, corner: 0.075, approximate: true },
+  /** Mesh texture, label and mean colour sampled from the same photo. */
+  textures: { mesh: pelvicMesh, label: pelvicLabel, colour: '#2a6459' },
   /**
    * Official MOB turntable photos, in order, same framing and lighting, e.g. 36 frames
    * at 10° steps: ['/images/pelvic-hold/turntable-01.webp', ...]. Empty = placeholder frames.
